@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
-// Initialize Supabase client from environment variables
+// Init Supabase
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -13,7 +13,8 @@ const outputFile = path.join(__dirname, '../data/ais_latest.json');
 
 async function main() {
   console.log('🔍 Loading MMSI list from ais_latest.json...');
-  const mmsiList = JSON.parse(fs.readFileSync(inputFile, 'utf-8')).map(ship => ship.mmsi);
+  const existingData = JSON.parse(fs.readFileSync(inputFile, 'utf-8'));
+  const mmsiList = existingData.map(ship => ship.mmsi);
 
   console.log('🛰️  Querying Supabase for latest records...');
   const { data, error } = await supabase
@@ -27,24 +28,24 @@ async function main() {
     process.exit(1);
   }
 
+  // Latest data (1 set per MMSI)
   const latestMap = new Map();
-  const latestRecords = [];
-
   for (const row of data) {
     if (!latestMap.has(row.mmsi)) {
       latestMap.set(row.mmsi, row);
-      latestRecords.push(row);
     }
   }
 
-  console.log(`📦 Found ${latestRecords.length} latest records. Writing to JSON...`);
-  fs.writeFileSync(outputFile, JSON.stringify(latestRecords, null, 2));
+  // Overwrite the existing data
+  const merged = existingData.map(ship => {
+    return latestMap.has(ship.mmsi) ? latestMap.get(ship.mmsi) : ship;
+  });
 
-  // Prepare keepIds
-  const keepIds = Array.isArray(latestRecords)
-    ? latestRecords.map(r => r.id).filter(id => id !== undefined)
-    : [];
+  console.log(`📦 Merged ${merged.length} records. Writing to JSON...`);
+  fs.writeFileSync(outputFile, JSON.stringify(merged, null, 2));
 
+  // Delete（except the latest）
+  const keepIds = [...latestMap.values()].map(r => r.id).filter(id => id !== undefined);
   console.log(`🧾 keepIds = ${JSON.stringify(keepIds)}`);
 
   if (keepIds.length > 0) {
@@ -52,7 +53,7 @@ async function main() {
     const { error: deleteError } = await supabase
       .from('ais_logs')
       .delete()
-      .filter('id', 'not.in', `(${keepIds.join(',')})`); // ← 修正ポイント
+      .filter('id', 'not.in', `(${keepIds.join(',')})`);
 
     if (deleteError) {
       console.error('❌ Failed to delete old records:', deleteError.message);
