@@ -28,17 +28,20 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def insert_row(mmsi, lat, lon, timestamp, cog, sog, name):
     # Check if record with this MMSI already exists in ais_logs table
-    res = supabase.table("ais_logs").select("id").eq("mmsi", mmsi).limit(1).execute()
+    res = supabase.table("ais_logs").select("id, timestamp").eq("mmsi", mmsi).order("timestamp", desc=True).limit(1).execute()
     if res.get("error"):
         print(f"❌ Supabase select error for MMSI {mmsi}: {res['error']}")
         return
 
-    if res.get("data") and len(res["data"]) > 0:
-        # Record exists, skip insertion
-        print(f"ℹ️ MMSI {mmsi} already exists in ais_logs. Skipping insert.")
-        return
+    existing = res.get("data")
+    if existing and len(existing) > 0:
+        latest_timestamp = existing[0]["timestamp"]
+        # If timestamp is the same, skip insertion
+        if latest_timestamp == timestamp:
+            print(f"ℹ️ MMSI {mmsi} timestamp unchanged. Skipping insert.")
+            return
 
-    # No existing record found, proceed to insert
+    # No record or timestamp changed, proceed to insert
     data = {
         "mmsi": mmsi,
         "lat": lat,
@@ -46,13 +49,14 @@ def insert_row(mmsi, lat, lon, timestamp, cog, sog, name):
         "timestamp": timestamp,
         "cog": cog,
         "sog": sog,
-        "name": name  # ← 追加
+        "name": name
     }
     resp = supabase.table("ais_logs").insert(data).execute()
     if resp.get("error"):
         print(f"❌ Supabase insert error: {resp['error']}")
     else:
         print(f"✅ Supabase insert success: {name} ({mmsi})")
+
 
 async def main():
     while True:
