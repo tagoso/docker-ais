@@ -26,7 +26,7 @@ TARGET_MMSIS = [
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def insert_row(mmsi, lat, lon, timestamp, cog, sog):
+def insert_row(mmsi, lat, lon, timestamp, cog, sog, name):
     data = {
         "mmsi": mmsi,
         "lat": lat,
@@ -34,12 +34,14 @@ def insert_row(mmsi, lat, lon, timestamp, cog, sog):
         "timestamp": timestamp,
         "cog": cog,
         "sog": sog,
+        "name": name  # ← 追加
     }
     resp = supabase.table("ais_logs").insert(data).execute()
     if resp.get("error"):
         print(f"❌ Supabase insert error: {resp['error']}")
     else:
-        print(f"✅ Supabase insert success: MMSI={mmsi}")
+        print(f"✅ Supabase insert success: {name} ({mmsi})")
+
 
 async def main():
     while True:
@@ -79,7 +81,7 @@ async def main():
                             timestamp = timestamp.replace(" +0000 UTC", "Z").split(".")[0] + "Z"
 
                         if mmsi in TARGET_MMSIS and lat is not None and lon is not None:
-                            insert_row(mmsi, lat, lon, timestamp, cog, sog)
+                            insert_row(mmsi, lat, lon, timestamp, cog, sog, shipname)
                             print(f"📡 {shipname} ({mmsi}) @ ({lat}, {lon}) | COG: {cog}° | SOG: {sog} knots @ {timestamp}")
                         else:
                             print(f"🚫 Skipped: {shipname} ({mmsi}) | lat: {lat}, lon: {lon}")
