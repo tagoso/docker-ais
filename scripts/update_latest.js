@@ -44,23 +44,16 @@ async function main() {
   console.log(`📦 Merged ${merged.length} records. Writing to JSON...`);
   fs.writeFileSync(outputFile, JSON.stringify(merged, null, 2));
 
-  // Delete（except the latest）
-  const keepIds = [...latestMap.values()].map(r => r.id).filter(id => id !== undefined);
-  console.log(`🧾 keepIds = ${JSON.stringify(keepIds)}`);
+  // Delete ALL records from ais_logs after JSON update
+  console.log('🧹 Deleting ALL records from ais_logs table...');
+  const { error: deleteError } = await supabase
+    .from('ais_logs')
+    .delete()
+    .neq('id', 0);  // delete all records (id != 0 matches all assuming id>0)
 
-  if (keepIds.length > 0) {
-    console.log(`🧹 Deleting ${data.length - keepIds.length} old records from Supabase...`);
-    const { error: deleteError } = await supabase
-      .from('ais_logs')
-      .delete()
-      .filter('id', 'not.in', `(${keepIds.join(',')})`);
-
-    if (deleteError) {
-      console.error('❌ Failed to delete old records:', deleteError.message);
-      process.exit(1);
-    }
-  } else {
-    console.log('🟡 No valid IDs to retain — skipping deletion.');
+  if (deleteError) {
+    console.error('❌ Failed to delete records:', deleteError.message);
+    process.exit(1);
   }
 
   console.log('✅ Update complete.');
