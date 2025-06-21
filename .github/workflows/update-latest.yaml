@@ -2,12 +2,13 @@ name: Update AIS Latest JSON
 
 on:
   schedule:
-    - cron: '0 */1 * * *'  # Run every 1 hour
-  workflow_dispatch:       # Allow manual execution
+    - cron: "0 */1 * * *" # Run every 1 hour
+  workflow_dispatch: # Allow manual execution
 
 jobs:
   update-ais:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: 📦 Checkout repository
@@ -16,7 +17,7 @@ jobs:
       - name: ⚙️ Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: 📁 Install dependencies
         run: npm install
