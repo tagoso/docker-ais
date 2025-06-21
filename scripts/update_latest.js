@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
-// Read from env
+// Initialize Supabase client from environment variables
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -38,21 +38,28 @@ async function main() {
   }
 
   console.log(`📦 Found ${latestRecords.length} latest records. Writing to JSON...`);
-
   fs.writeFileSync(outputFile, JSON.stringify(latestRecords, null, 2));
 
-  // Delete old records
-  const keepIds = latestRecords.map(r => r.id);
+  // Prepare keepIds safely
+  const keepIds = Array.isArray(latestRecords)
+    ? latestRecords.map(r => r.id).filter(id => id !== undefined)
+    : [];
 
-  console.log(`🧹 Deleting ${data.length - keepIds.length} old records from Supabase...`);
-  const { error: deleteError } = await supabase
-    .from('ais_logs')
-    .delete()
-    .not('id', 'in', keepIds);
+  console.log(`🧾 keepIds = ${JSON.stringify(keepIds)}`);
 
-  if (deleteError) {
-    console.error('❌ Failed to delete old records:', deleteError.message);
-    process.exit(1);
+  if (keepIds.length > 0) {
+    console.log(`🧹 Deleting ${data.length - keepIds.length} old records from Supabase...`);
+    const { error: deleteError } = await supabase
+      .from('ais_logs')
+      .delete()
+      .not('id', 'in', keepIds);
+
+    if (deleteError) {
+      console.error('❌ Failed to delete old records:', deleteError.message);
+      process.exit(1);
+    }
+  } else {
+    console.log('🟡 No valid IDs to retain — skipping deletion.');
   }
 
   console.log('✅ Update complete.');
