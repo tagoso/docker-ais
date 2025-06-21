@@ -4,7 +4,7 @@ name: Update AIS Latest JSON
 
 on:
   schedule:
-    - cron: "*/30 * * * *" # Run every 30 mins
+    - cron: "0 */1 * * *" # 1 hour. 30 mins is 30 * * * *
   workflow_dispatch: # Allow manual trigger from GitHub UI
 
 jobs:
