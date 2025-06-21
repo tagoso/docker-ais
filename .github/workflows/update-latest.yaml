@@ -1,3 +1,5 @@
+permissions:
+  contents: write
 name: Update AIS Latest JSON
 
 on:
@@ -34,4 +36,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/ais_latest.json
           git diff --cached --quiet || git commit -m "Update AIS latest data"
-          git push
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
