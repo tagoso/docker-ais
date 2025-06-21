@@ -49,7 +49,6 @@ async function main() {
   const { error: deleteError } = await supabase
     .from('ais_logs')
     .delete()
-    .neq('id', 0);  // delete all records (id != 0 matches all assuming id>0)
 
   if (deleteError) {
     console.error('❌ Failed to delete records:', deleteError.message);
