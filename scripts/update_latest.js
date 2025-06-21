@@ -40,7 +40,7 @@ async function main() {
   console.log(`📦 Found ${latestRecords.length} latest records. Writing to JSON...`);
   fs.writeFileSync(outputFile, JSON.stringify(latestRecords, null, 2));
 
-  // Prepare keepIds safely
+  // Prepare keepIds
   const keepIds = Array.isArray(latestRecords)
     ? latestRecords.map(r => r.id).filter(id => id !== undefined)
     : [];
@@ -52,7 +52,7 @@ async function main() {
     const { error: deleteError } = await supabase
       .from('ais_logs')
       .delete()
-      .not('id', 'in', keepIds);
+      .filter('id', 'not.in', `(${keepIds.join(',')})`); // ← 修正ポイント
 
     if (deleteError) {
       console.error('❌ Failed to delete old records:', deleteError.message);
