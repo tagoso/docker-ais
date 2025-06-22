@@ -44,7 +44,31 @@ async function main() {
   console.log(`📦 Merged ${merged.length} records. Writing to JSON...`);
   fs.writeFileSync(outputFile, JSON.stringify(merged, null, 2));
 
-  // Delete ALL records from ais_logs after JSON update
+  // Step 1: Backup to ais_archive
+  console.log('📁 Backing up all records to ais_archive...');
+  const { data: allLogs, error: fetchAllError } = await supabase
+    .from('ais_logs')
+    .select('*');
+
+  if (fetchAllError) {
+    console.error('❌ Failed to fetch all ais_logs for archive:', fetchAllError.message);
+    process.exit(1);
+  }
+
+  if (allLogs.length > 0) {
+    const { error: archiveError } = await supabase
+      .from('ais_archive')
+      .insert(allLogs);
+
+    if (archiveError) {
+      console.error('❌ Failed to archive records:', archiveError.message);
+      process.exit(1);
+    }
+  } else {
+    console.log('⚠️ No records found to archive.');
+  }
+
+  // Step 2: Delete ALL records from ais_logs
   console.log('🧹 Deleting ALL records from ais_logs table...');
   const { error: deleteError } = await supabase
     .from('ais_logs')
@@ -56,7 +80,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('✅ Update complete.');
+  console.log('✅ Update and archive complete.');
 }
 
 main();
