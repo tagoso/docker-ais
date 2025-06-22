@@ -28,11 +28,11 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def insert_row(mmsi, lat, lon, timestamp, cog, sog, name):
     res = supabase.table("ais_logs").select("id").eq("mmsi", mmsi).limit(1).execute()
-    if res.error:
-        print(f"❌ Supabase select error for MMSI {mmsi}: {res.error}")
+    if res.status_code != 200:
+        print(f"❌ Supabase select error for MMSI {mmsi}: {res}")
         return
-
     existing = res.data
+
     if existing and len(existing) > 0:
         print(f"ℹ️ MMSI {mmsi} already exists in ais_logs. Skipping insert.")
         return
@@ -49,8 +49,8 @@ def insert_row(mmsi, lat, lon, timestamp, cog, sog, name):
     resp = supabase.table("ais_logs").insert(data).execute()
     print("🔍 Insert response:", resp)  # Whole response object
 
-    if resp.error:
-        print(f"❌ Supabase insert error: {resp.error}")
+    if resp.status_code != 201:
+        print(f"❌ Supabase insert error: {resp}")
     else:
         print(f"✅ Supabase insert success: {name} ({mmsi})")
 
