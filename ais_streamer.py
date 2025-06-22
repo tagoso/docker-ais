@@ -50,11 +50,11 @@ def insert_row(mmsi, lat, lon, timestamp, cog, sog, name):
         "name": name
     }
     resp = supabase.table("ais_logs").insert(data).execute()
+    print("🔍 Insert response:", resp)  # Whole response
     if resp.get("error"):
         print(f"❌ Supabase insert error: {resp['error']}")
     else:
         print(f"✅ Supabase insert success: {name} ({mmsi})")
-
 
 async def main():
     while True:
