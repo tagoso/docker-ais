@@ -27,19 +27,16 @@ TARGET_MMSIS = [
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def insert_row(mmsi, lat, lon, timestamp, cog, sog, name):
-    # Check if record with this MMSI already exists in ais_logs table
     res = supabase.table("ais_logs").select("id").eq("mmsi", mmsi).limit(1).execute()
-    if res.get("error"):
-        print(f"❌ Supabase select error for MMSI {mmsi}: {res['error']}")
+    if res.error:
+        print(f"❌ Supabase select error for MMSI {mmsi}: {res.error}")
         return
 
-    existing = res.get("data")
+    existing = res.data
     if existing and len(existing) > 0:
-        # If record exists, skip insertion
         print(f"ℹ️ MMSI {mmsi} already exists in ais_logs. Skipping insert.")
         return
 
-    # No existing record found, proceed to insert
     data = {
         "mmsi": mmsi,
         "lat": lat,
@@ -50,9 +47,10 @@ def insert_row(mmsi, lat, lon, timestamp, cog, sog, name):
         "name": name
     }
     resp = supabase.table("ais_logs").insert(data).execute()
-    print("🔍 Insert response:", resp)  # Whole response
-    if resp.get("error"):
-        print(f"❌ Supabase insert error: {resp['error']}")
+    print("🔍 Insert response:", resp)  # Whole response object
+
+    if resp.error:
+        print(f"❌ Supabase insert error: {resp.error}")
     else:
         print(f"✅ Supabase insert success: {name} ({mmsi})")
 
