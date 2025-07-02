@@ -38,7 +38,22 @@ async function main() {
 
   // Overwrite the existing data
   const merged = existingData.map(ship => {
-    return latestMap.has(ship.mmsi) ? latestMap.get(ship.mmsi) : ship;
+    if (!latestMap.has(ship.mmsi)) {
+      return ship;
+    }
+
+    const latest = latestMap.get(ship.mmsi);
+
+    const isNameInvalid =
+      !latest.name || latest.name.trim().toUpperCase() === 'EMPTY';
+
+    const name = isNameInvalid ? ship.name : latest.name;
+
+    return {
+      ...ship,
+      ...latest,
+      name, // Overwrite name conditionally
+    };
   });
 
   console.log(`📦 Merged ${merged.length} records. Writing to JSON...`);
