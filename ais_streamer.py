@@ -12,9 +12,6 @@ API_KEY = os.getenv("API_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-print("🔧 Starting AIS Streamer...")
-print(f"🔑 API_KEY: {API_KEY}")
-
 URI = "wss://stream.aisstream.io/v0/stream"
 BBOX = [[[-180, -90], [180, 90]]]
 
