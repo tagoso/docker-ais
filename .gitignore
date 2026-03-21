@@ -17,3 +17,11 @@ Thumbs.db
 
 #
 node_modules/
+
+# VPS deployment files (managed locally, not in GitHub)
+ais_streamer.py
+health_server.py
+requirements.txt
+Dockerfile
+docker-compose.yml
+fly.toml
